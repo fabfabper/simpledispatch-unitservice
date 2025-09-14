@@ -1,22 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using simpledispatch_unitservice;
-using simpledispatch_unitservice.Data;
-using simpledispatch_unitservice.Repositories;
 
-var builder = Host.CreateApplicationBuilder(args);
+namespace simpledispatch_unitservice;
 
-// Configure Entity Framework
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure RabbitMQ settings
-builder.Services.Configure<RabbitMQConfiguration>(
-    builder.Configuration.GetSection("RabbitMQ"));
-
-// Register repository
-builder.Services.AddScoped<IDatabaseRepository, DatabaseRepository>();
-
-builder.Services.AddHostedService<Worker>();
-
-var host = builder.Build();
-host.Run();
+public class Program
+{
+    public static async Task Main(string[] args)
+    {
+        var service = new UnitService(args);
+        await service.RunAsync();
+    }
+}

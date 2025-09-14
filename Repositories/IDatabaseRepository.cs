@@ -1,13 +1,10 @@
 using SimpleDispatch.SharedModels.Entities;
+using SimpleDispatch.ServiceBase.Database.Interfaces;
 
 namespace simpledispatch_unitservice.Repositories;
 
-public interface IDatabaseRepository
+public interface IDatabaseRepository : IRepository<Unit, string>
 {
-    Task<IEnumerable<Unit>> GetAllUnitsAsync();
-    Task<Unit?> GetUnitByIdAsync(int id);
     Task<IEnumerable<Unit>> GetUnitsByStatusAsync(int status);
-    Task<Unit> CreateUnitAsync(Unit unit);
-    Task<Unit?> UpdateUnitAsync(Unit unit);
-    Task<bool> DeleteUnitAsync(int id);
+    Task<IEnumerable<Unit>> GetActiveUnitsAsync();
 }
