@@ -1,6 +1,6 @@
 using SimpleDispatch.ServiceBase;
 using SimpleDispatch.ServiceBase.Interfaces;
-using SimpleDispatch.ServiceBase.Database;
+using simpledispatch_unitservice.Data;
 using simpledispatch_unitservice.Repositories;
 
 namespace simpledispatch_unitservice;
@@ -18,7 +18,7 @@ public class UnitService : BaseService
 
     protected override void ConfigureDatabase()
     {
-        ConfigurePostgreSqlDbContext<BaseDbContext>();
+        ConfigurePostgreSqlDbContext<UnitDbContext>();
     }
 
     protected override void ConfigureServices()

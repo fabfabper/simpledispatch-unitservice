@@ -20,15 +20,16 @@ This service has been refactored to use the SimpleDispatch.ServiceBase package, 
 1. **UnitService** (`UnitService.cs`) - Main service class inheriting from `BaseService`
 2. **UnitMessageHandler** (`UnitMessageHandler.cs`) - Handles RabbitMQ messages
 3. **UnitsController** (`Controllers/UnitsController.cs`) - REST API endpoints with transaction support
-4. **DatabaseRepository** (`Repositories/DatabaseRepository.cs`) - Data access layer inheriting from `BaseRepository<Unit, string, BaseDbContext>`
-5. **IDatabaseRepository** (`Repositories/IDatabaseRepository.cs`) - Repository interface extending `IRepository<Unit, string>`
+4. **UnitDbContext** (`Data/UnitDbContext.cs`) - Concrete database context inheriting from `BaseDbContext`
+5. **DatabaseRepository** (`Repositories/DatabaseRepository.cs`) - Data access layer inheriting from `BaseRepository<Unit, string, UnitDbContext>`
+6. **IDatabaseRepository** (`Repositories/IDatabaseRepository.cs`) - Repository interface extending `IRepository<Unit, string>`
 
 ### Repository Pattern
 
 The service now uses the ServiceBase repository pattern:
 
-- **Base Repository**: `DatabaseRepository` inherits from `BaseRepository<Unit, string, BaseDbContext>`
-- **Base DbContext**: Uses the framework's `BaseDbContext` directly (no custom DbContext needed)
+- **Base Repository**: `DatabaseRepository` inherits from `BaseRepository<Unit, string, UnitDbContext>`
+- **Concrete DbContext**: Uses `UnitDbContext` that inherits from `BaseDbContext` (required since BaseDbContext is abstract)
 - **Interface**: `IDatabaseRepository` extends `IRepository<Unit, string>` from ServiceBase
 - **Built-in Methods**: Includes standard CRUD operations (GetAllAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, SaveChangesAsync)
 - **Custom Methods**: Additional methods like `GetUnitsByStatusAsync()` and `GetActiveUnitsAsync()`
