@@ -1,8 +1,8 @@
 using SimpleDispatch.ServiceBase.Interfaces;
-using SimpleDispatch.SharedModels.Entities;
+using SimpleDispatch.SharedModels.Commands;
 using simpledispatch_unitservice.Repositories;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
+using SimpleDispatch.SharedModels.CommandTypes;
 
 namespace simpledispatch_unitservice;
 
@@ -25,53 +25,51 @@ public class UnitMessageHandler : IMessageHandler
         {
             _logger.LogInformation("Processing message: {Message}", message);
 
-            // Try to parse the message as JSON to extract message type and unit information
-            var messageData = JsonSerializer.Deserialize<Dictionary<string, object>>(message);
-            
-            if (messageData?.ContainsKey("messageType") == true)
+            var unitCommand = System.Text.Json.JsonSerializer.Deserialize<UnitCommand>(message);
+            if (unitCommand == null)
             {
-                var messageType = messageData["messageType"].ToString();
-                _logger.LogInformation("Processing message of type: {MessageType}", messageType);
-
-                // Process the message based on its type
-                switch (messageType)
-                {
-                    case "UnitCreated":
-                    case "UnitUpdated":
-                    case "UnitStatusChanged":
-                        await ProcessUnitUpdate();
-                        break;
-                    case "UnitDeleted":
-                        await ProcessUnitDeletion();
-                        break;
-                    default:
-                        _logger.LogWarning("Unknown message type: {MessageType}", messageType);
-                        break;
-                }
-            }
-            else
-            {
-                // Fallback: just log all units for any message
+                _logger.LogWarning("Failed to deserialize message as UnitCommand");
                 await LogDatabaseUnits();
+                return;
             }
 
-            _logger.LogInformation("Successfully processed message");
+            var unitEntity = UnitCommandConverter.ToUnit(unitCommand);
+
+            _logger.LogInformation("Received UnitCommand: Command={CommandType}, UnitId={UnitId}", unitCommand.Command, unitCommand.Id);
+
+            switch (unitCommand.Command)
+            {
+                case UnitCommandType.UpdateUnit:
+                case UnitCommandType.UpdateUnitStatus:
+                    await ProcessUnitUpdate(unitEntity);
+                    break;
+                // case UnitCommandType.:
+                //     await ProcessUnitDeletion();
+                //     break;
+                default:
+                    _logger.LogWarning("Unknown Command: {Command}", unitCommand.Command);
+                    break;
+            }
+
+            _logger.LogInformation("Successfully processed UnitCommand");
         }
-        catch (JsonException ex)
+        catch (System.Text.Json.JsonException ex)
         {
-            _logger.LogWarning(ex, "Failed to parse message as JSON, treating as plain text");
+            _logger.LogWarning(ex, "Failed to parse message as UnitCommand JSON");
             await LogDatabaseUnits();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing message");
+            _logger.LogError(ex, "Error processing UnitCommand message");
             throw;
         }
     }
 
-    private async Task ProcessUnitUpdate()
+    private async Task ProcessUnitUpdate(SimpleDispatch.SharedModels.Entities.Unit unit)
     {
-        // Log all units when receiving a unit update message
+        await _databaseRepository.UpdateAsync(unit);
+        await _databaseRepository.SaveChangesAsync();
+        _logger.LogInformation("Unit updated in database: {UnitId}", unit.Id);
         await LogDatabaseUnits();
     }
 
