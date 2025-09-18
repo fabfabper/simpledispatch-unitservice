@@ -10,13 +10,16 @@ public class UnitMessageHandler : IMessageHandler
 {
     private readonly ILogger<UnitMessageHandler> _logger;
     private readonly IDatabaseRepository _databaseRepository;
+    private readonly IRabbitMqProducer _producer;
 
     public UnitMessageHandler(
         ILogger<UnitMessageHandler> logger,
-        IDatabaseRepository databaseRepository)
+        IDatabaseRepository databaseRepository,
+        IRabbitMqProducer producer)
     {
         _logger = logger;
         _databaseRepository = databaseRepository;
+        _producer = producer;
     }
 
     public async Task HandleMessageAsync(string message, BasicDeliverEventArgs args)
@@ -50,6 +53,11 @@ public class UnitMessageHandler : IMessageHandler
                     _logger.LogWarning("Unknown Command: {Command}", unitCommand.Command);
                     break;
             }
+
+            // Publish the UnitCommand to RabbitMQ after processing
+            var serialized = System.Text.Json.JsonSerializer.Serialize(unitCommand);
+            await _producer.PublishAsync(serialized, "notifications");
+            _logger.LogInformation("Published UnitCommand to RabbitMQ after processing");
 
             _logger.LogInformation("Successfully processed UnitCommand");
         }

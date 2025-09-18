@@ -2,6 +2,7 @@ using SimpleDispatch.ServiceBase;
 using SimpleDispatch.ServiceBase.Interfaces;
 using simpledispatch_unitservice.Data;
 using simpledispatch_unitservice.Repositories;
+using SimpleDispatch.ServiceBase.Extensions;
 
 namespace simpledispatch_unitservice;
 
@@ -23,6 +24,7 @@ public class UnitService : BaseService
 
     protected override void ConfigureServices()
     {
-        Builder.Services.AddScoped<IDatabaseRepository, DatabaseRepository>();
+    Builder.Services.AddScoped<IDatabaseRepository, DatabaseRepository>();
+    Builder.Services.AddRabbitMqProducer(Builder.Configuration);
     }
 }
